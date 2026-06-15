@@ -16,12 +16,7 @@ db/
   payments_payme.sql              # standalone schema snippet
   schema.sql                      # includes `payments` for fresh installs
 
-client/src/
-  pages/PaymentPage.jsx
-  pages/PaymentSuccess.jsx
-  pages/PaymentFailed.jsx
-  pages/PaymentPages.css
-  services/paymentService.js
+# פרונטאנד (אם קיים בפרויקט נפרד): דפי תשלום ו־paymentService שקוראים ל־API.
 ```
 
 ## Installation
@@ -102,7 +97,7 @@ Also required for correct default return URLs:
 ## Frontend flow
 
 1. User opens `/pay` (protected).
-2. Client calls `POST /api/payments/create` via `client/src/services/paymentService.js`.
+2. Your frontend (if any) calls `POST /api/payments/create` with the user’s JWT.
 3. Server returns `checkoutUrl` → browser navigates to PayMe.
 4. User pays (or cancels).
 5. PayMe calls `POST /api/payments/webhook` → server updates `payments.status`.

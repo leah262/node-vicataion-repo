@@ -1,8 +1,7 @@
 import cron from 'node-cron';
 import { selectReminderTargets, setExpiryReminderSent, suspendExpiredApartments } from '../models/apartmentModel.js';
 import { sendListingExpiryReminderEmail } from '../utils/mailer.js';
-
-const APP_URL = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
+import { getWebAppBaseForLinks } from '../config/publicUrls.js';
 
 function resolveOwner(apt) {
   return {
@@ -39,7 +38,7 @@ async function sendReminderFor(apt, stageValue) {
         to: owner.email,
         fullName: owner.name,
         apartment: apt,
-        renewUrl: `${APP_URL}/my-apartments/${apt.id}/renew`,
+        renewUrl: `${getWebAppBaseForLinks()}/my-apartments/${apt.id}/renew`,
         expiryDate: formatHebrewDate(apt.expires_at),
         daysLeft: daysUntil(apt.expires_at),
       });

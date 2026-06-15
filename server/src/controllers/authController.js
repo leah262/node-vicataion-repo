@@ -23,9 +23,9 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from '../utils/mailer.js';
+import { getWebAppBaseForLinks } from '../config/publicUrls.js';
 const STRONG_PASSWORD = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
-const APP_URL = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '';
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
@@ -45,7 +45,7 @@ function publicUser(row) {
 
 async function sendVerification(user) {
   const token = signEmailToken({ id: user.id, email: user.email });
-  const verifyUrl = `${APP_URL}/verify-email?token=${encodeURIComponent(token)}`;
+  const verifyUrl = `${getWebAppBaseForLinks()}/verify-email?token=${encodeURIComponent(token)}`;
   await sendVerificationEmail({ to: user.email, fullName: user.full_name, verifyUrl });
 }
 
@@ -159,7 +159,7 @@ export async function forgotPassword(req, res) {
       email: user.email,
       fp: passwordFingerprint(user.password_hash),
     });
-    const resetUrl = `${APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
+    const resetUrl = `${getWebAppBaseForLinks()}/reset-password?token=${encodeURIComponent(token)}`;
     try {
       await sendPasswordResetEmail({
         to: user.email,

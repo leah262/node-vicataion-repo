@@ -16,10 +16,10 @@ import {
   normalizePayMeError,
   verifyPayment as paymeVerifyPayment,
 } from '../services/paymeService.js';
+import { getWebAppBaseForLinks } from '../config/publicUrls.js';
 
 function appBaseUrl() {
-  const raw = String(process.env.APP_URL || 'http://localhost:3000').replace(/\/+$/, '');
-  return raw;
+  return getWebAppBaseForLinks();
 }
 
 export async function createPayMePayment(req, res) {

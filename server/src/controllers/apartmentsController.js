@@ -22,19 +22,20 @@ import {
   sendListingInquiryEmail,
 } from '../utils/mailer.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
+import { getPublicApiBase, getWebAppBaseForLinks } from '../config/publicUrls.js';
 import {
   selectAdminEmailsFromDb,
   selectUserContactById,
   selectUserPublisherFields,
 } from '../models/userModel.js';
 
-const APP_URL = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
-const PUBLIC_API_URL = (process.env.PUBLIC_API_URL || `${APP_URL}/api`).replace(/\/$/, '');
+const PUBLIC_API_URL = getPublicApiBase();
 
 function absoluteImageUrl(url) {
   if (!url) return null;
   if (/^https?:\/\//i.test(url)) return url;
-  return `${APP_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  const base = getWebAppBaseForLinks();
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
 }
 
 async function resolveOwnerContact(apt) {
@@ -140,7 +141,7 @@ export async function postInquiry(req, res) {
       apartment: apt,
       senderEmail,
       message: message.trim(),
-      listingUrl: `${APP_URL}/apartments/${apt.id}`,
+      listingUrl: `${getWebAppBaseForLinks()}/apartments/${apt.id}`,
     });
   } catch (err) {
     console.error('[mailer] מייל פנייה לבעל הנכס נכשל:', err.message);
@@ -208,7 +209,7 @@ export async function create(req, res) {
 
       const approveToken = signApproveToken({ id: apartment.id });
       const approveUrl = `${PUBLIC_API_URL}/apartments/${apartment.id}/email-approve?token=${encodeURIComponent(approveToken)}`;
-      const adminPanelUrl = `${APP_URL}/admin`;
+      const adminPanelUrl = `${getWebAppBaseForLinks()}/admin`;
 
       const emailApartment = {
         ...apartment,
@@ -322,8 +323,8 @@ async function approveApartmentById(id) {
         to: ownerEmail,
         ownerName,
         apartment,
-        listingUrl: `${APP_URL}/apartments/${apartment.id}`,
-        editUrl: `${APP_URL}/my-apartments/${apartment.id}/edit`,
+        listingUrl: `${getWebAppBaseForLinks()}/apartments/${apartment.id}`,
+        editUrl: `${getWebAppBaseForLinks()}/my-apartments/${apartment.id}/edit`,
       });
     } catch (err) {
       console.error('[mailer] מייל "המודעה פורסמה" נכשל:', err.message);
@@ -362,7 +363,7 @@ ${body}</div></body></html>`);
       'קישור לא תקין',
       `<h2 style="color:#b8860b;">הקישור אינו תקין או שפג תוקפו</h2>
          <p>ניתן להיכנס לפאנל הניהול ולאשר את המודעה ידנית.</p>
-         <a href="${APP_URL}/admin" style="color:#1a2b4a;font-weight:700;">למעבר לפאנל הניהול</a>`,
+         <a href="${getWebAppBaseForLinks()}/admin" style="color:#1a2b4a;font-weight:700;">למעבר לפאנל הניהול</a>`,
     );
   }
 
@@ -380,10 +381,10 @@ ${body}</div></body></html>`);
     'המודעה אושרה',
     `<h2 style="color:#237804;">✅ המודעה אושרה ופורסמה!</h2>
        <p>"${safeTitle}" גלויה כעת לכולם.</p>
-       <a href="${APP_URL}/apartments/${Number(apartment.id)}"
+       <a href="${getWebAppBaseForLinks()}/apartments/${Number(apartment.id)}"
           style="display:inline-block;margin-top:8px;padding:12px 26px;background:#b8860b;color:#fff;
                  border-radius:10px;text-decoration:none;font-weight:700;">צפייה במודעה</a>
-       <p style="margin-top:14px;"><a href="${APP_URL}/admin" style="color:#1a2b4a;">לפאנל הניהול</a></p>`,
+       <p style="margin-top:14px;"><a href="${getWebAppBaseForLinks()}/admin" style="color:#1a2b4a;">לפאנל הניהול</a></p>`,
   );
 }
 

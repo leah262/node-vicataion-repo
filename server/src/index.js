@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
 import { testConnection } from './config/db.js';
 import { corsOptions } from './config/cors.js';
 import apartmentsRouter from './routes/apartments.js';
@@ -23,6 +24,7 @@ import { getPayMeEnvStatus } from './config/payme.js';
 import { selectDatabaseInfo } from './models/dbMetaModel.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { asyncHandler } from './utils/asyncHandler.js';
+import { getPublicSiteBase } from './config/publicUrls.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,19 +37,17 @@ if (isProd) {
   app.set('trust proxy', 1);
 }
 
-/** Dev-friendly CSP on API responses (HMR / direct API calls from localhost:3000). */
+/** Dev CSP: השרת + מקורות נוספים מ־CSP_DEV_EXTRA_CONNECT (מופרד בפסיקים), בלי הנחת SPA קבוע. */
 const devConnectSrc = [
   "'self'",
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost:5000',
-  'http://127.0.0.1:5000',
-  'ws://localhost:3000',
-  'ws://127.0.0.1:3000',
-  'ws://localhost:5000',
-  'ws://127.0.0.1:5000',
-  'ws://localhost:5173',
-  'ws://127.0.0.1:5173',
+  `http://localhost:${PORT}`,
+  `http://127.0.0.1:${PORT}`,
+  `ws://localhost:${PORT}`,
+  `ws://127.0.0.1:${PORT}`,
+  ...(process.env.CSP_DEV_EXTRA_CONNECT || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
 ];
 
 app.use(cors(corsOptions));
@@ -99,27 +99,32 @@ app.use((req, res, next) => {
   next();
 });
 
-// Port 5000 is JSON API only — opening http://localhost:5000/ in a browser had no route (404).
-const CLIENT_DEV_URL = process.env.CLIENT_DEV_URL || 'http://localhost:3000/';
+const publicSite = getPublicSiteBase();
+const clientUrlHint = process.env.CLIENT_DEV_URL?.trim() || publicSite || '';
 app.get('/', (req, res) => {
   if (req.accepts('html')) {
+    const siteLine = clientUrlHint
+      ? `<p>Public site (APP_URL / CLIENT_DEV_URL): <a href="${clientUrlHint}">${clientUrlHint}</a></p>`
+      : '<p>No separate frontend URL configured. Set <code>APP_URL</code> or <code>CLIENT_DEV_URL</code> if you serve a SPA elsewhere.</p>';
     res.type('html').send(`<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"/><title>API</title></head><body>
-<p><strong>This is the backend API</strong> (port ${PORT}). The React site is served separately.</p>
-<p>Open the app: <a href="${CLIENT_DEV_URL}">${CLIENT_DEV_URL}</a></p>
+<p><strong>This is the backend API</strong> (port ${PORT}).</p>
+${siteLine}
 <p>API check: <a href="/api/health">/api/health</a></p>
 </body></html>`);
     return;
   }
   res.json({
     service: 'vacation-rentals-api',
-    client: CLIENT_DEV_URL,
+    client: clientUrlHint || null,
     endpoints: ['/api/health', '/api/auth', '/api/apartments', '/api/pricing', '/api/orders'],
   });
 });
 
-// הגשת תמונות שהועלו (סטטי)
-app.use('/uploads', express.static(uploadsDir));
+// תמונות חדשות נשמרות ב-Cloudinary בלבד. סטטי רק אם נשארו קבצים ישנים בתיקייה מקומית.
+if (fs.existsSync(uploadsDir)) {
+  app.use('/uploads', express.static(uploadsDir));
+}
 
 app.use('/api/auth', authRouter);
 app.use('/api/apartments', apartmentsRouter);
