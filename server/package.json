@@ -1,0 +1,29 @@
+{
+  "name": "vacation-rentals-server",
+  "version": "1.0.0",
+  "description": "Backend API for vacation rentals agency",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "setup-db": "node scripts/setup-db.mjs",
+    "setup-pricing": "node scripts/run-pricing-sql.mjs",
+    "setup-faq": "node scripts/run-faq-sql.mjs",
+    "migrate": "node scripts/migrate.mjs",
+    "setup-payments": "node scripts/run-payments-sql.mjs",
+    "copy-to-railway": "node scripts/copy-to-railway.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "google-auth-library": "^10.7.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "mysql2": "^3.22.3",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.10"
+  }
+}
